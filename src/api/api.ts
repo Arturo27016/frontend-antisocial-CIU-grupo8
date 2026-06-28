@@ -60,9 +60,13 @@ export async function createPost(
 
 // Comentarios
 export async function getCommentsByPost(postId: string): Promise<Comment[]> {
-  const res = await fetch(`${BASE_URL}/comments/${postId}`);
+  const res = await fetch(`${BASE_URL}/comments`);
   if (!res.ok) throw new Error('Error al obtener comentarios');
-  return res.json();
+  const all: Comment[] = await res.json();
+  return all.filter((c: any) => {
+    const id = typeof c.postId === 'object' ? c.postId._id : c.postId;
+    return id === postId;
+  });
 }
 
 export async function createComment(

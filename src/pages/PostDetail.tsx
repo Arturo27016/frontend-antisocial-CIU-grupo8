@@ -2,15 +2,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getPostById, createComment } from '../api/api';
+import { getPostById, getCommentsByPost, createComment } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import type { Post } from '../types';
+import type { Post, Comment } from '../types';
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, isLoggedIn } = useAuth();
 
   const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -21,8 +22,11 @@ export default function PostDetail() {
 
   useEffect(() => {
     if (!id) return;
-    getPostById(id)
-      .then(setPost)
+    Promise.all([getPostById(id), getCommentsByPost(id)])
+      .then(([postData, commentsData]) => {
+        setPost(postData);
+        setComments(commentsData);
+      })
       .catch(() => setError('No se pudo cargar la publicación.'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -45,16 +49,7 @@ export default function PostDetail() {
         content: commentContent.trim(),
         userId: user._id,
       });
-
-      // Agregamos el comentario nuevo al estado local
-      setPost((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          comments: [...(prev.comments ?? []), newComment],
-        };
-      });
-
+      setComments((prev) => [...prev, newComment]);
       setCommentContent('');
       setCommentSuccess(true);
     } catch {
@@ -89,6 +84,7 @@ export default function PostDetail() {
   }
 
   const tags = post.tags as any[];
+  const author = typeof post.userId === 'object' ? post.userId.nickname : 'Usuario';
 
   return (
     <>
@@ -97,7 +93,6 @@ export default function PostDetail() {
       <div className="container py-4" style={{ maxWidth: 680 }}>
         {/* Card del post */}
         <div className="card shadow-sm border-0 rounded-4 mb-4">
-          {/* Imágenes */}
           {post.images && post.images.length > 0 && (
             <div>
               {post.images.map((img) => (
@@ -116,6 +111,36 @@ export default function PostDetail() {
           )}
 
           <div className="card-body px-4 py-3">
+            {/* Autor */}
+            <div className="d-flex align-items-center gap-2 mb-3">
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                style={{
+                  width: 40,
+                  height: 40,
+                  fontSize: '1rem',
+                  backgroundColor: '#1877f2',
+                  flexShrink: 0,
+                }}
+              >
+                {author[0].toUpperCase()}
+              </div>
+              <div>
+                <p className="fw-semibold mb-0">{author}</p>
+                {post.publishedAt && (
+                  <p className="text-muted mb-0" style={{ fontSize: '0.78rem' }}>
+                    {new Date(post.publishedAt).toLocaleDateString('es-AR', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Tags */}
             {tags && tags.length > 0 && (
               <div className="mb-3 d-flex flex-wrap gap-1">
@@ -131,8 +156,7 @@ export default function PostDetail() {
               </div>
             )}
 
-            {/* Descripción */}
-            <p className="card-text fs-5">{post.description}</p>
+            <p className="card-text fs-5 mb-3">{post.description}</p>
 
             <Link to="/" className="text-decoration-none" style={{ color: '#1877f2' }}>
               ← Volver al inicio
@@ -140,30 +164,56 @@ export default function PostDetail() {
           </div>
         </div>
 
-        {/* Sección comentarios */}
-        <h5 className="fw-bold mb-3">
-          💬 Comentarios ({post.comments?.length ?? 0})
-        </h5>
+        {/* Comentarios */}
+        <h5 className="fw-bold mb-3">💬 Comentarios ({comments.length})</h5>
 
-        {post.comments && post.comments.length > 0 ? (
+        {comments.length > 0 ? (
           <div className="d-flex flex-column gap-3 mb-4">
-            {post.comments.map((comment) => (
-              <div
-                key={comment._id}
-                className="card border-0 rounded-4"
-                style={{ backgroundColor: '#f0f2f5' }}
-              >
-                <div className="card-body py-2 px-3">
-                  <p className="mb-0">{comment.content}</p>
+            {comments.map((comment) => {
+              const commentAuthor =
+                typeof comment.userId === 'object'
+                  ? comment.userId.nickname
+                  : 'Usuario';
+              return (
+                <div
+                  key={comment._id}
+                  className="card border-0 rounded-4"
+                  style={{ backgroundColor: '#f0f2f5' }}
+                >
+                  <div className="card-body py-2 px-3">
+                    <div className="d-flex align-items-center gap-2 mb-1">
+                      <div
+                        className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                        style={{
+                          width: 28,
+                          height: 28,
+                          fontSize: '0.75rem',
+                          backgroundColor: '#1877f2',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {commentAuthor[0].toUpperCase()}
+                      </div>
+                      <span className="fw-semibold" style={{ fontSize: '0.85rem' }}>
+                        {commentAuthor}
+                      </span>
+                      {comment.publishedAt && (
+                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                          · {new Date(comment.publishedAt).toLocaleDateString('es-AR')}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mb-0 ms-4">{comment.content}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="text-muted mb-4">Todavía no hay comentarios.</p>
         )}
 
-        {/* Formulario para comentar */}
+        {/* Formulario comentario */}
         {isLoggedIn ? (
           <div className="card border-0 shadow-sm rounded-4 p-3">
             <h6 className="fw-semibold mb-3">Dejá tu comentario</h6>

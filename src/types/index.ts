@@ -16,16 +16,19 @@ export interface Tag {
 
 export interface Comment {
   _id: string;
-  postId: string;
-  userId: string;
+  postId: string | { _id: string; description: string };
+  userId: string | User;
   content: string;
+  isVisible?: boolean;
+  publishedAt?: string;
 }
 
 export interface Post {
   _id: string;
-  userId: string;
+  userId: User;          // ← ahora es un objeto User, no un string
   description: string;
   images: Image[];
   tags: Tag[] | string[];
   comments?: Comment[];
+  publishedAt?: string;
 }
