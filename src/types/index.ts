@@ -4,7 +4,7 @@ export interface User {
   email: string;
 }
 
-export interface Image {
+export interface PostImage {
   _id: string;
   url: string;
 }
@@ -27,7 +27,7 @@ export interface Post {
   _id: string;
   userId: User;          // ← ahora es un objeto User, no un string
   description: string;
-  images: Image[];
+  images: PostImage[];
   tags: Tag[] | string[];
   comments?: Comment[];
   publishedAt?: string;

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { createPost, getTags } from '../api/api';
+import { addTagToPost, createPost, getTags, uploadPostImage } from '../api/api';
 import type { Tag } from '../types';
 
 export default function CreatePost() {
@@ -14,6 +14,9 @@ export default function CreatePost() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,30 +34,50 @@ export default function CreatePost() {
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!description.trim()) {
-      setError('La descripción es obligatoria.');
-      return;
+        setError('La descripción es obligatoria.');
+        return;
     }
 
     if (!user) return;
 
     setLoading(true);
     try {
-      await createPost(user.nickname, {
+        // 1 — Crear el post
+        const newPost = await createPost(user.nickname, {
         description: description.trim(),
-      });
+        });
 
-      navigate('/profile');
+        // 2 — Subir imagen y asignar tags en paralelo
+        await Promise.all([
+        ...(imageFile ? [uploadPostImage(newPost._id, imageFile)] : []),
+        ...selectedTags.map((tagId) => addTagToPost(newPost._id, tagId)),
+        ]);
+
+        navigate('/profile');
     } catch (err: any) {
-      setError(err.message || 'No se pudo crear la publicación.');
+        setError(err.message || 'No se pudo crear la publicación.');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   return (
     <>
@@ -90,6 +113,47 @@ export default function CreatePost() {
                 placeholder="¿Qué estás pensando?"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Imagen */}
+            <div className="mb-4">
+              <label className="form-label fw-semibold">Imagen (opcional)</label>
+
+              {imagePreview ? (
+                <div className="position-relative">
+                  <img
+                    src={imagePreview}
+                    alt="preview"
+                    className="rounded-4 w-100"
+                    style={{ maxHeight: 300, objectFit: 'cover' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle fw-bold"
+                    style={{ width: 32, height: 32, lineHeight: 1 }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="border rounded-4 d-flex flex-column align-items-center justify-content-center py-4 text-muted"
+                  style={{ cursor: 'pointer', borderStyle: 'dashed !important', backgroundColor: '#f8f9fa' }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <span style={{ fontSize: '2rem' }}>📷</span>
+                  <span style={{ fontSize: '0.9rem' }}>Hacé click para subir una imagen</span>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="d-none"
+                onChange={handleImageChange}
               />
             </div>
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -98,7 +99,7 @@ function PostCard({
     <div className="card shadow-sm border-0 mb-4 rounded-4">
       {firstImage && (
         <img
-          src={`http://localhost:3000/${firstImage.url}`}
+          src={`http://localhost:3000${firstImage.url}`}
           alt="imagen del post"
           className="card-img-top rounded-top-4"
           style={{ maxHeight: 400, objectFit: 'cover' }}

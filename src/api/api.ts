@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { User, Post, Comment, Tag } from '../types';
 
 const BASE_URL = 'http://localhost:3000';
@@ -86,5 +87,25 @@ export async function createComment(
 export async function getTags(): Promise<Tag[]> {
   const res = await fetch(`${BASE_URL}/tags`);
   if (!res.ok) throw new Error('Error al obtener tags');
+  return res.json();
+}
+
+export async function addTagToPost(postId: string, tagId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/posts/${postId}/tags/${tagId}`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error('No se pudo agregar el tag');
+}
+
+// Imagen en post
+export async function uploadPostImage(postId: string, file: File): Promise<{ url: string; _id: string }> {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const res = await fetch(`${BASE_URL}/posts/${postId}/images`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('No se pudo subir la imagen');
   return res.json();
 }

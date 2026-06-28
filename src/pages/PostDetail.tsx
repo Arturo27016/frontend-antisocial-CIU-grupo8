@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getPostById, getCommentsByPost, createComment } from '../api/api';
+import { getPostById, getCommentsByPost, createComment, getTags } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import type { Post, Comment } from '../types';
+import type { Post, Comment, Tag } from '../types';
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
@@ -20,12 +21,15 @@ export default function PostDetail() {
   const [commentLoading, setCommentLoading] = useState(false);
   const [commentSuccess, setCommentSuccess] = useState(false);
 
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+
   useEffect(() => {
     if (!id) return;
-    Promise.all([getPostById(id), getCommentsByPost(id)])
-      .then(([postData, commentsData]) => {
+    Promise.all([getPostById(id), getCommentsByPost(id), getTags()])
+      .then(([postData, commentsData, tagsData]) => {
         setPost(postData);
         setComments(commentsData);
+        setAllTags(tagsData);
       })
       .catch(() => setError('No se pudo cargar la publicación.'))
       .finally(() => setLoading(false));
@@ -98,7 +102,7 @@ export default function PostDetail() {
               {post.images.map((img) => (
                 <img
                   key={img._id}
-                  src={`http://localhost:3000/${img.url}`}
+                  src={`http://localhost:3000${img.url}`}
                   alt="imagen"
                   className="card-img-top rounded-top-4"
                   style={{ maxHeight: 450, objectFit: 'cover' }}
@@ -144,17 +148,23 @@ export default function PostDetail() {
             {/* Tags */}
             {tags && tags.length > 0 && (
               <div className="mb-3 d-flex flex-wrap gap-1">
-                {tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="badge rounded-pill"
-                    style={{ backgroundColor: '#e7f3ff', color: '#1877f2' }}
-                  >
-                    #{typeof tag === 'string' ? tag : tag.name}
-                  </span>
-                ))}
+                {tags.map((tag, i) => {
+                  // Si el tag es un string (ID), buscamos el nombre en allTags
+                  const tagName = typeof tag === 'string'
+                    ? allTags.find((t) => t._id === tag)?.name ?? tag
+                    : (tag as Tag).name;
+                  return (
+                    <span
+                      key={i}
+                      className="badge rounded-pill"
+                      style={{ backgroundColor: '#e7f3ff', color: '#1877f2' }}
+                    >
+                      #{tagName}
+                    </span>
+                  );
+                })}
               </div>
-            )}
+)}
 
             <p className="card-text fs-5 mb-3">{post.description}</p>
 
