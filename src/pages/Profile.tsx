@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { getPosts } from '../api/api';
+import { getPosts, getCommentsByPost } from '../api/api';
 import type { Post } from '../types';
 
 export default function Profile() {
@@ -13,23 +14,36 @@ export default function Profile() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!user) return;
-    getPosts()
-      .then((allPosts) => {
-        // userId ahora es un objeto, comparamos con ._id
-        const myPosts = allPosts.filter((p) => p.userId._id === user._id);
-        setPosts(myPosts);
-      })
-      .catch(() => setError('No se pudieron cargar tus publicaciones.'))
-      .finally(() => setLoading(false));
-  }, [user]);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
+    };
+
+  useEffect(() => {
+    if (!user) return;
+    getPosts()
+        .then(async (allPosts) => {
+        const myPosts = allPosts.filter((p) => p.userId._id === user._id);
+        setPosts(myPosts);
+
+        const counts: Record<string, number> = {};
+        await Promise.all(
+            myPosts.map(async (post) => {
+            try {
+                const comments = await getCommentsByPost(post._id);
+                counts[post._id] = comments.length;
+            } catch {
+                counts[post._id] = 0;
+            }
+            })
+        );
+        setCommentCounts(counts);
+        })
+        .catch(() => setError('No se pudieron cargar tus publicaciones.'))
+        .finally(() => setLoading(false));
+    }, [user]);
 
   return (
     <>
@@ -144,8 +158,8 @@ export default function Profile() {
 
                   <div className="d-flex justify-content-between align-items-center">
                     <span className="text-muted" style={{ fontSize: '0.85rem' }}>
-                      💬 {post.comments?.length ?? 0} comentario
-                      {post.comments?.length !== 1 ? 's' : ''}
+                      💬 {commentCounts[post._id] ?? 0} comentario
+                        {(commentCounts[post._id] ?? 0) !== 1 ? 's' : ''}
                     </span>
                     <Link
                       to={`/post/${post._id}`}

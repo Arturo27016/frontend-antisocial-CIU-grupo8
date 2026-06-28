@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUsers } from '../api/api';
 
@@ -16,10 +16,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   // Si ya está logueado, redirigir al home
-  if (isLoggedIn) {
-    navigate('/');
-    return null;
-  }
+  if (isLoggedIn) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

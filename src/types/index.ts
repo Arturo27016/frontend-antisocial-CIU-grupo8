@@ -25,7 +25,7 @@ export interface Comment {
 
 export interface Post {
   _id: string;
-  userId: User;          // ← ahora es un objeto User, no un string
+  userId: User;          
   description: string;
   images: PostImage[];
   tags: Tag[] | string[];

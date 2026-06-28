@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { getPosts, getCommentsByPost } from '../api/api';
-import type { Post, Comment } from '../types';
+import type { Post } from '../types';
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
