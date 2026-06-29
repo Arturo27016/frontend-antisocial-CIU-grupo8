@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getPosts, getCommentsByPost } from '../api/api';
+import { getPosts, getCommentsByPost, deletePost } from '../api/api';
 import type { Post } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   useEffect(() => {
     getPosts()
@@ -77,6 +79,15 @@ export default function Home() {
               key={post._id}
               post={post}
               commentCount={commentCounts[post._id] ?? 0}
+              currentUserId={user?._id}
+              onDelete={(postId) => {
+                setPosts((prev) => prev.filter((p) => p._id !== postId));
+                setCommentCounts((prev) => {
+                  const updated = { ...prev };
+                  delete updated[postId];
+                  return updated;
+                });
+              }}
             />
           ))}
       </div>
@@ -87,13 +98,30 @@ export default function Home() {
 function PostCard({
   post,
   commentCount,
+  currentUserId,
+  onDelete,
 }: {
   post: Post;
   commentCount: number;
+  currentUserId?: string;
+  onDelete: (postId: string) => void;
 }) {
   const tags = post.tags as any[];
   const firstImage = post.images && post.images.length > 0 ? post.images[0] : null;
   const author = typeof post.userId === 'object' ? post.userId.nickname : 'Usuario';
+  const isOwner = typeof post.userId === 'object'
+    ? post.userId._id === currentUserId
+    : post.userId === currentUserId;
+
+  const handleDelete = async () => {
+    if (!confirm('¿Seguro que querés eliminar esta publicación?')) return;
+    try {
+      await deletePost(post._id);
+      onDelete(post._id);
+    } catch {
+      alert('No se pudo eliminar la publicación.');
+    }
+  };
 
   return (
     <div className="card shadow-sm border-0 mb-4 rounded-4">
@@ -167,13 +195,23 @@ function PostCard({
           <span className="text-muted" style={{ fontSize: '0.85rem' }}>
             💬 {commentCount} comentario{commentCount !== 1 ? 's' : ''}
           </span>
-          <Link
-            to={`/post/${post._id}`}
-            className="btn btn-primary btn-sm px-3 fw-semibold"
-            style={{ backgroundColor: '#1877f2', border: 'none' }}
-          >
-            Ver más
-          </Link>
+          <div className="d-flex gap-2">
+            {isOwner && (
+              <button
+                onClick={handleDelete}
+                className="btn btn-outline-danger btn-sm px-3 fw-semibold"
+              >
+                🗑 Eliminar
+              </button>
+            )}
+            <Link
+              to={`/post/${post._id}`}
+              className="btn btn-primary btn-sm px-3 fw-semibold"
+              style={{ backgroundColor: '#1877f2', border: 'none' }}
+            >
+              Ver más
+            </Link>
+          </div>
         </div>
       </div>
     </div>

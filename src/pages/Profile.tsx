@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { getPosts, getCommentsByPost } from '../api/api';
+import { getPosts, getCommentsByPost, deletePost } from '../api/api';
 import type { Post } from '../types';
 
 export default function Profile() {
@@ -44,6 +44,21 @@ export default function Profile() {
         .catch(() => setError('No se pudieron cargar tus publicaciones.'))
         .finally(() => setLoading(false));
     }, [user]);
+  
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm('¿Seguro que querés eliminar esta publicación?')) return;
+    try {
+      await deletePost(postId);
+      setPosts((prev) => prev.filter((p) => p._id !== postId));
+      setCommentCounts((prev) => {
+        const updated = { ...prev };
+        delete updated[postId];
+        return updated;
+      });
+    } catch {
+      alert('No se pudo eliminar la publicación.');
+    }
+  };
 
   return (
     <>
@@ -159,19 +174,28 @@ export default function Profile() {
                   <div className="d-flex justify-content-between align-items-center">
                     <span className="text-muted" style={{ fontSize: '0.85rem' }}>
                       💬 {commentCounts[post._id] ?? 0} comentario
-                        {(commentCounts[post._id] ?? 0) !== 1 ? 's' : ''}
+                      {(commentCounts[post._id] ?? 0) !== 1 ? 's' : ''}
                     </span>
-                    <Link
-                      to={`/post/${post._id}`}
-                      className="btn btn-primary btn-sm px-3 fw-semibold"
-                      style={{ backgroundColor: '#1877f2', border: 'none' }}
-                    >
-                      Ver más
-                    </Link>
+                    <div className="d-flex gap-2">
+                      <button
+                        onClick={() => handleDeletePost(post._id)}
+                        className="btn btn-outline-danger btn-sm px-3 fw-semibold"
+                      >
+                        🗑 Eliminar
+                      </button>
+                      <Link
+                        to={`/post/${post._id}`}
+                        className="btn btn-primary btn-sm px-3 fw-semibold"
+                        style={{ backgroundColor: '#1877f2', border: 'none' }}
+                      >
+                        Ver más
+                      </Link>
+                      
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
         </div>
       </div>
     </>

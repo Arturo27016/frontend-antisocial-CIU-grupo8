@@ -109,3 +109,32 @@ export async function uploadPostImage(postId: string, file: File): Promise<{ url
   if (!res.ok) throw new Error('No se pudo subir la imagen');
   return res.json();
 }
+
+// Eliminar Post
+export async function deletePost(postId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/posts/${postId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('No se pudo eliminar el post');
+}
+
+// Seguir, dejar de seguir y obtener seguidores
+export async function getFollowers(nickname: string): Promise<any[]> {
+  const res = await fetch(`${BASE_URL}/users/${nickname}/followers`);
+  if (!res.ok) throw new Error('Error al obtener seguidores');
+  return res.json();
+}
+
+export async function followUser(nickname: string, followedNickname: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/users/${nickname}/following/${followedNickname}`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error('No se pudo seguir al usuario');
+}
+
+export async function unfollowUser(nickname: string, followedNickname: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/users/${nickname}/following/${followedNickname}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('No se pudo dejar de seguir al usuario');
+}
