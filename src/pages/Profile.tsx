@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { getPosts, getCommentsByPost, deletePost } from '../api/api';
-import type { Post } from '../types';
+import { getPosts, getCommentsByPost, deletePost, getFollowers, getUsers } from '../api/api';
+import type { Post, User } from '../types';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -15,36 +15,50 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    };
+  const [followerCount, setFollowerCount] = useState(0);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
-    getPosts()
-        .then(async (allPosts) => {
-        const myPosts = allPosts.filter((p) => p.userId._id === user._id);
-        setPosts(myPosts);
 
-        const counts: Record<string, number> = {};
-        await Promise.all(
-            myPosts.map(async (post) => {
-            try {
-                const comments = await getCommentsByPost(post._id);
-                counts[post._id] = comments.length;
-            } catch {
-                counts[post._id] = 0;
-            }
-            })
-        );
-        setCommentCounts(counts);
+    Promise.all([
+      getPosts(),
+      getFollowers(user.nickname),
+      getUsers(),
+    ]).then(async ([allPosts, followers, users]) => {
+      const myPosts = allPosts.filter((p) => p.userId._id === user._id);
+      setPosts(myPosts);
+      setFollowerCount(followers.length);
+
+      // Usuarios que sigue el usuario logueado
+      const res = await fetch(`http://localhost:3000/users/${user.nickname}/following`);
+      const followingData = res.ok ? await res.json() : [];
+      const followingIds = followingData.map((f: any) =>
+        typeof f.followedId === 'object' ? f.followedId._id : f.followedId
+      );
+      setFollowing(followingIds);
+
+      // Todos los usuarios menos yo
+      setAllUsers(users.filter((u) => u._id !== user._id));
+
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        myPosts.map(async (post) => {
+          try {
+            const comments = await getCommentsByPost(post._id);
+            counts[post._id] = comments.length;
+          } catch {
+            counts[post._id] = 0;
+          }
         })
-        .catch(() => setError('No se pudieron cargar tus publicaciones.'))
-        .finally(() => setLoading(false));
-    }, [user]);
-  
+      );
+      setCommentCounts(counts);
+    })
+    .catch(() => setError('Error al cargar el perfil.'))
+    .finally(() => setLoading(false));
+  }, [user]);
+
   const handleDeletePost = async (postId: string) => {
     if (!confirm('¿Seguro que querés eliminar esta publicación?')) return;
     try {
@@ -70,44 +84,31 @@ export default function Profile() {
           className="card border-0 shadow-sm rounded-4 mb-4 p-4"
           style={{ backgroundColor: '#1877f2' }}
         >
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="d-flex align-items-center gap-3">
-              <div
-                className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                style={{
-                  width: 64,
-                  height: 64,
-                  fontSize: '1.8rem',
-                  backgroundColor: 'rgba(255,255,255,0.25)',
-                }}
-              >
-                {user?.nickname[0].toUpperCase()}
-              </div>
-              <div>
-                <h4 className="fw-bold text-white mb-0">{user?.nickname}</h4>
-                <span className="text-white opacity-75" style={{ fontSize: '0.9rem' }}>
-                  {user?.email}
-                </span>
-                <br />
-                <span className="text-white opacity-75" style={{ fontSize: '0.9rem' }}>
-                  {posts.length} publicación{posts.length !== 1 ? 'es' : ''}
-                </span>
-              </div>
+          <div className="d-flex align-items-center gap-3">
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+              style={{
+                width: 64,
+                height: 64,
+                fontSize: '1.8rem',
+                backgroundColor: 'rgba(255,255,255,0.25)',
+              }}
+            >
+              {user?.nickname[0].toUpperCase()}
             </div>
-            <div className="d-flex flex-column gap-2">
-              <Link
-                to="/create-post"
-                className="btn btn-light btn-sm fw-semibold"
-                style={{ color: '#1877f2' }}
-              >
-                + Nueva publicación
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="btn btn-outline-light btn-sm fw-semibold"
-              >
-                Cerrar sesión
-              </button>
+            <div>
+              <h4 className="fw-bold text-white mb-0">{user?.nickname}</h4>
+              <span className="text-white opacity-75" style={{ fontSize: '0.9rem' }}>
+                {user?.email}
+              </span>
+              <div className="d-flex gap-3 mt-1">
+                <span className="text-white opacity-75" style={{ fontSize: '0.9rem' }}>
+                  📝 {posts.length} publicación{posts.length !== 1 ? 'es' : ''}
+                </span>
+                <span className="text-white opacity-75" style={{ fontSize: '0.9rem' }}>
+                  👥 {followerCount} seguidor{followerCount !== 1 ? 'es' : ''}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -190,12 +191,11 @@ export default function Profile() {
                       >
                         Ver más
                       </Link>
-                      
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </>

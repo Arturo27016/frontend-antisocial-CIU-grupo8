@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import { getPosts, getCommentsByPost, deletePost } from '../api/api';
 import type { Post } from '../types';
 import { useAuth } from '../context/AuthContext';
+import UserHoverCard from '../components/UserHoverCard';
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -14,12 +15,14 @@ export default function Home() {
   const [error, setError] = useState('');
   const { user } = useAuth();
 
+  // Estado global de following para compartir entre todos los PostCard
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [followingLoaded, setFollowingLoaded] = useState(false);
+
   useEffect(() => {
     getPosts()
       .then(async (fetchedPosts) => {
         setPosts(fetchedPosts);
-
-        // Traemos los comentarios de cada post en paralelo
         const counts: Record<string, number> = {};
         await Promise.all(
           fetchedPosts.map(async (post) => {
@@ -37,11 +40,31 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Cargar lista de usuarios que sigue el usuario logueado
+  useEffect(() => {
+    if (!user || followingLoaded) return;
+    fetch(`http://localhost:3000/users/${user.nickname}/following`)
+      .then((res) => res.json())
+      .then((data) => {
+        const ids = data.map((f: any) =>
+          typeof f.followedId === 'object' ? f.followedId._id : f.followedId
+        );
+        setFollowingIds(ids);
+        setFollowingLoaded(true);
+      })
+      .catch(() => setFollowingLoaded(true));
+  }, [user, followingLoaded]);
+
+  const handleFollowChange = (targetId: string, nowFollowing: boolean) => {
+    setFollowingIds((prev) =>
+      nowFollowing ? [...prev, targetId] : prev.filter((id) => id !== targetId)
+    );
+  };
+
   return (
     <>
       <Navbar />
 
-      {/* Banner de bienvenida */}
       <div
         className="text-white text-center py-5"
         style={{
@@ -54,7 +77,6 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Feed */}
       <div className="container py-4" style={{ maxWidth: 680 }}>
         {loading && (
           <div className="text-center py-5">
@@ -80,6 +102,8 @@ export default function Home() {
               post={post}
               commentCount={commentCounts[post._id] ?? 0}
               currentUserId={user?._id}
+              followingIds={followingIds}
+              onFollowChange={handleFollowChange}
               onDelete={(postId) => {
                 setPosts((prev) => prev.filter((p) => p._id !== postId));
                 setCommentCounts((prev) => {
@@ -99,16 +123,19 @@ function PostCard({
   post,
   commentCount,
   currentUserId,
+  followingIds,
+  onFollowChange,
   onDelete,
 }: {
   post: Post;
   commentCount: number;
   currentUserId?: string;
+  followingIds: string[];
+  onFollowChange: (targetId: string, nowFollowing: boolean) => void;
   onDelete: (postId: string) => void;
 }) {
   const tags = post.tags as any[];
   const firstImage = post.images && post.images.length > 0 ? post.images[0] : null;
-  const author = typeof post.userId === 'object' ? post.userId.nickname : 'Usuario';
   const isOwner = typeof post.userId === 'object'
     ? post.userId._id === currentUserId
     : post.userId === currentUserId;
@@ -139,33 +166,21 @@ function PostCard({
 
       <div className="card-body px-4 py-3">
         {/* Autor y fecha */}
-        <div className="d-flex align-items-center gap-2 mb-3">
-          <div
-            className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-            style={{
-              width: 40,
-              height: 40,
-              fontSize: '1rem',
-              backgroundColor: '#1877f2',
-              flexShrink: 0,
-            }}
-          >
-            {author[0].toUpperCase()}
-          </div>
-          <div>
-            <p className="fw-semibold mb-0" style={{ fontSize: '0.95rem' }}>
-              {author}
+        <div className="d-flex align-items-center justify-content-between mb-3">
+          <UserHoverCard
+            author={post.userId}
+            followingIds={followingIds}
+            onFollowChange={onFollowChange}
+          />
+          {post.publishedAt && (
+            <p className="text-muted mb-0" style={{ fontSize: '0.78rem' }}>
+              {new Date(post.publishedAt).toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+              })}
             </p>
-            {post.publishedAt && (
-              <p className="text-muted mb-0" style={{ fontSize: '0.78rem' }}>
-                {new Date(post.publishedAt).toLocaleDateString('es-AR', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </p>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Tags */}
@@ -183,14 +198,12 @@ function PostCard({
           </div>
         )}
 
-        {/* Descripción */}
         <p className="card-text mb-3" style={{ fontSize: '1rem' }}>
           {post.description}
         </p>
 
         <hr className="my-2" />
 
-        {/* Footer */}
         <div className="d-flex justify-content-between align-items-center">
           <span className="text-muted" style={{ fontSize: '0.85rem' }}>
             💬 {commentCount} comentario{commentCount !== 1 ? 's' : ''}
