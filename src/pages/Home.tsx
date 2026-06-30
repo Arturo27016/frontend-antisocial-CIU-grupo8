@@ -134,6 +134,11 @@ function PostCard({
   onFollowChange: (targetId: string, nowFollowing: boolean) => void;
   onDelete: (postId: string) => void;
 }) {
+  // Si el usuario que creó el post fue eliminado, no renderizamos ese post
+  if (!post.userId) {
+    return null;
+  }
+
   const tags = post.tags as any[];
   const firstImage = post.images && post.images.length > 0 ? post.images[0] : null;
   const isOwner = typeof post.userId === 'object'

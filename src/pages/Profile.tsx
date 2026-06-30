@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { getPosts, getCommentsByPost, deletePost, getFollowers, getUsers } from '../api/api';
+import { getPosts, getCommentsByPost, deletePost, getFollowers, getFollowing, getUsers, deleteUser } from '../api/api';
 import type { Post, User } from '../types';
 
 export default function Profile() {
@@ -18,44 +18,40 @@ export default function Profile() {
   const [followerCount, setFollowerCount] = useState(0);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [following, setFollowing] = useState<string[]>([]);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+  if (!user) return;
 
-    Promise.all([
-      getPosts(),
-      getFollowers(user.nickname),
-      getUsers(),
-    ]).then(async ([allPosts, followers, users]) => {
-      const myPosts = allPosts.filter((p) => p.userId._id === user._id);
-      setPosts(myPosts);
-      setFollowerCount(followers.length);
+  Promise.all([
+    getPosts(),
+    getFollowers(user.nickname),
+    getFollowing(user.nickname),
+    ]).then(async ([allPosts, followers, followingList]) => {
+      const myPosts = allPosts.filter((p) => {
+        if (!p.userId) return false; // ← descarta posts huérfanos
+        const uid = typeof p.userId === 'object' ? p.userId._id : p.userId;
+        return uid === user._id;
+      });
+    setPosts(myPosts);
+    setFollowerCount(followers.length);
+    setFollowingCount(followingList.length);
 
-      // Usuarios que sigue el usuario logueado
-      const res = await fetch(`http://localhost:3000/users/${user.nickname}/following`);
-      const followingData = res.ok ? await res.json() : [];
-      const followingIds = followingData.map((f: any) =>
-        typeof f.followedId === 'object' ? f.followedId._id : f.followedId
-      );
-      setFollowing(followingIds);
-
-      // Todos los usuarios menos yo
-      setAllUsers(users.filter((u) => u._id !== user._id));
-
-      const counts: Record<string, number> = {};
-      await Promise.all(
-        myPosts.map(async (post) => {
-          try {
-            const comments = await getCommentsByPost(post._id);
-            counts[post._id] = comments.length;
-          } catch {
-            counts[post._id] = 0;
-          }
-        })
-      );
-      setCommentCounts(counts);
-    })
-    .catch(() => setError('Error al cargar el perfil.'))
+    const counts: Record<string, number> = {};
+    await Promise.all(
+      myPosts.map(async (post) => {
+        try {
+          const comments = await getCommentsByPost(post._id);
+          counts[post._id] = comments.length;
+        } catch {
+          counts[post._id] = 0;
+        }
+      })
+    );
+    setCommentCounts(counts);
+  })
+    .catch(() => setError('No se pudieron cargar tus publicaciones.'))
     .finally(() => setLoading(false));
   }, [user]);
 
@@ -73,6 +69,24 @@ export default function Profile() {
       alert('No se pudo eliminar la publicación.');
     }
   };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    const confirmed = confirm(
+      '¿Estás seguro que querés eliminar tu cuenta? Esta acción no se puede deshacer.'
+  );
+    if (!confirmed) return;
+
+  setDeletingAccount(true);
+    try {
+      await deleteUser(user.nickname);
+      logout();
+      navigate('/login');
+    } catch {
+      alert('No se pudo eliminar la cuenta.');
+      setDeletingAccount(false);
+  }
+};
 
   return (
     <>
@@ -108,7 +122,10 @@ export default function Profile() {
                 <span className="text-white opacity-75" style={{ fontSize: '0.9rem' }}>
                   👥 {followerCount} seguidor{followerCount !== 1 ? 'es' : ''}
                 </span>
-              </div>
+                <span className="text-white opacity-75" style={{ fontSize: '0.9rem' }}>
+                  ➡️ {followingCount} siguiendo
+                </span>
+             </div>
             </div>
           </div>
         </div>
@@ -196,6 +213,20 @@ export default function Profile() {
                 </div>
               </div>
             ))}
+        </div>
+        {/* Zona de peligro */}
+        <div className="card border-0 shadow-sm rounded-4 mt-4 p-4">
+          <h6 className="fw-bold text-danger mb-2">Zona de peligro</h6>
+          <p className="text-muted mb-3" style={{ fontSize: '0.85rem' }}>
+            Al eliminar tu cuenta perderás el acceso de forma permanente. Esta acción no se puede deshacer.
+          </p>
+          <button
+            onClick={handleDeleteAccount}
+            className="btn btn-outline-danger fw-semibold"
+            disabled={deletingAccount}
+          >
+            {deletingAccount ? 'Eliminando...' : '🗑 Eliminar mi cuenta'}
+          </button>
         </div>
       </div>
     </>

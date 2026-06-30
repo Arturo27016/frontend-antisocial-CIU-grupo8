@@ -16,6 +16,12 @@ export async function getUserByNickname(nickname: string): Promise<User> {
   return res.json();
 }
 
+export async function getUserById(id: string): Promise<User> {
+  const res = await fetch(`${BASE_URL}/users/${id}`);
+  if (!res.ok) throw new Error('Usuario no encontrado');
+  return res.json();
+}
+
 export async function createUser(data: {
   nickname: string;
   email: string;
@@ -118,7 +124,7 @@ export async function deletePost(postId: string): Promise<void> {
   if (!res.ok) throw new Error('No se pudo eliminar el post');
 }
 
-// Seguir, dejar de seguir y obtener seguidores
+// Seguir, dejar de seguir y obtener seguidores y seguidos
 export async function getFollowers(nickname: string): Promise<any[]> {
   const res = await fetch(`${BASE_URL}/users/${nickname}/followers`);
   if (!res.ok) throw new Error('Error al obtener seguidores');
@@ -137,4 +143,18 @@ export async function unfollowUser(nickname: string, followedNickname: string): 
     method: 'DELETE',
   });
   if (!res.ok) throw new Error('No se pudo dejar de seguir al usuario');
+}
+
+export async function getFollowing(nickname: string): Promise<User[]> {
+  const res = await fetch(`${BASE_URL}/users/${nickname}/following`);
+  if (!res.ok) throw new Error('Error al obtener usuarios seguidos');
+  return res.json();
+}
+
+// Borra cuenta
+export async function deleteUser(nickname: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/users/${nickname}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('No se pudo eliminar la cuenta');
 }

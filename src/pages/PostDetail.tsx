@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getPostById, getCommentsByPost, createComment, getTags } from '../api/api';
+import { getPostById, getCommentsByPost, createComment, getTags, getUsers } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import type { Post, Comment, Tag } from '../types';
 
@@ -12,6 +12,7 @@ export default function PostDetail() {
   const { user, isLoggedIn } = useAuth();
 
   const [post, setPost] = useState<Post | null>(null);
+  const [postAuthor, setPostAuthor] = useState<string>('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,11 +26,18 @@ export default function PostDetail() {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([getPostById(id), getCommentsByPost(id), getTags()])
-      .then(([postData, commentsData, tagsData]) => {
+    Promise.all([getPostById(id), getCommentsByPost(id), getTags(), getUsers()])
+      .then(([postData, commentsData, tagsData, usersData]) => {
         setPost(postData);
         setComments(commentsData);
         setAllTags(tagsData);
+
+        if (typeof postData.userId === 'string') {
+          const found = usersData.find((u) => u._id === postData.userId);
+          setPostAuthor(found ? found.nickname : 'Usuario');
+        } else {
+          setPostAuthor(postData.userId.nickname);
+        }
       })
       .catch(() => setError('No se pudo cargar la publicación.'))
       .finally(() => setLoading(false));
@@ -88,7 +96,6 @@ export default function PostDetail() {
   }
 
   const tags = post.tags as any[];
-  const author = typeof post.userId === 'object' ? post.userId.nickname : 'Usuario';
 
   return (
     <>
@@ -127,10 +134,10 @@ export default function PostDetail() {
                   flexShrink: 0,
                 }}
               >
-                {author[0].toUpperCase()}
+                {postAuthor[0].toUpperCase()}
               </div>
               <div>
-                <p className="fw-semibold mb-0">{author}</p>
+                <p className="fw-semibold mb-0">{postAuthor}</p>
                 {post.publishedAt && (
                   <p className="text-muted mb-0" style={{ fontSize: '0.78rem' }}>
                     {new Date(post.publishedAt).toLocaleDateString('es-AR', {

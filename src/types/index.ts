@@ -25,7 +25,7 @@ export interface Comment {
 
 export interface Post {
   _id: string;
-  userId: User;          
+  userId: User | string;          
   description: string;
   images: PostImage[];
   tags: Tag[] | string[];
