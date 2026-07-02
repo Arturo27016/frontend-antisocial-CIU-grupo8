@@ -16,6 +16,7 @@ export default function CreatePost() {
   const [tagsLoading, setTagsLoading] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [error, setError] = useState('');
@@ -48,35 +49,34 @@ export default function CreatePost() {
   };
 
     const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
+  setError('');
 
-    if (!description.trim()) {
-        setError('La descripción es obligatoria.');
-        return;
-    }
+  if (!description.trim()) {
+    setError('La descripción es obligatoria.');
+    return;
+  }
 
-    if (!user) return;
+  if (!user) return;
 
-    setLoading(true);
-    try {
-        // 1 — Crear el post
-        const newPost = await createPost(user.nickname, {
-        description: description.trim(),
-        });
+  setLoading(true);
+  try {
+    const newPost = await createPost(user.nickname, {
+      description: description.trim(),
+    });
 
-        // 2 — Subir imagen y asignar tags en paralelo
-        await Promise.all([
-        ...(imageFile ? [uploadPostImage(newPost._id, imageFile)] : []),
-        ...selectedTags.map((tagId) => addTagToPost(newPost._id, tagId)),
-        ]);
+    await Promise.all([
+      ...(imageFile ? [uploadPostImage(newPost._id, imageFile)] : []),
+      ...selectedTags.map((tagId) => addTagToPost(newPost._id, tagId)),
+    ]);
 
-        navigate('/profile');
-    } catch (err: any) {
-        setError(err.message || 'No se pudo crear la publicación.');
-    } finally {
-        setLoading(false);
-    }
+    setSuccess(true);
+    setTimeout(() => navigate('/profile'), 2000);
+  } catch (err: any) {
+    setError(err.message || 'No se pudo crear la publicación.');
+  } finally {
+    setLoading(false);
+  }
 };
 
   return (
@@ -97,6 +97,21 @@ export default function CreatePost() {
 
         {/* Formulario */}
         <div className="card border-0 shadow-sm rounded-4 p-4">
+          {success && (
+            <div
+              className="alert alert-success d-flex align-items-center gap-2 py-3"
+              role="alert"
+            >
+              <span style={{ fontSize: '1.2rem' }}>✅</span>
+              <div>
+                <strong>¡Publicación creada!</strong>
+                <p className="mb-0" style={{ fontSize: '0.85rem' }}>
+                  Te redirigimos a tu perfil en un momento...
+                </p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="alert alert-danger py-2">{error}</div>
           )}
@@ -199,7 +214,7 @@ export default function CreatePost() {
                 type="submit"
                 className="btn btn-primary fw-bold px-4"
                 style={{ backgroundColor: '#1877f2', border: 'none' }}
-                disabled={loading}
+                disabled={loading || success}
               >
                 {loading ? 'Publicando...' : 'Publicar'}
               </button>
