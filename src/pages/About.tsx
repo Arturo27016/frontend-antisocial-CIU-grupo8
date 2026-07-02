@@ -13,10 +13,7 @@ export default function About() {
           background: 'linear-gradient(135deg, #1877f2 0%, #0a58ca 100%)',
         }}
       >
-        <h1 className="fw-bold display-4 mb-3">AntiSocial Net</h1>
-        <p className="lead mb-0" style={{ maxWidth: 600, margin: '0 auto' }}>
-          La red social que no pediste, pero que de alguna forma terminaste usando.
-        </p>
+        <h1 className="fw-bold display-4 mb-3">AntiSocial</h1>
       </div>
 
       <div className="container py-5" style={{ maxWidth: 720 }}>
@@ -24,15 +21,14 @@ export default function About() {
         {/* Sobre el proyecto */}
         <div className="card border-0 shadow-sm rounded-4 p-4 mb-4">
           <h3 className="fw-bold mb-3" style={{ color: '#1877f2' }}>
-            ¿Qué es AntiSocial Net?
+            ¿Qué es AntiSocial?
           </h3>
           <p className="text-muted mb-0" style={{ lineHeight: 1.8 }}>
-            AntiSocial Net es una red social desarrollada como Trabajo Práctico N°2
+            AntiSocial es una red social desarrollada como Trabajo Práctico N°2
             de la materia <strong>Construcción de Interfaces de Usuario</strong> de la
             Universidad Nacional de Hurlingham (<strong>UNaHur</strong>). El proyecto
             consiste en un frontend en React que consume una API REST desarrollada en
-            la materia <strong>Estrategias de Persistencia</strong>. Aunque el nombre
-            sugiere lo contrario, el objetivo es conectar personas... o al menos intentarlo.
+            la materia <strong>Estrategias de Persistencia</strong>.
           </p>
         </div>
 
@@ -43,22 +39,22 @@ export default function About() {
           </h3>
           <div className="row g-3">
             {[
-              { icon: '⚛️', name: 'React 19', desc: 'Librería principal de UI' },
-              { icon: '🔷', name: 'TypeScript', desc: 'Tipado estático' },
-              { icon: '⚡', name: 'Vite', desc: 'Bundler y servidor de desarrollo' },
-              { icon: '🎨', name: 'Bootstrap 5', desc: 'Framework de estilos' },
-              { icon: '🔀', name: 'React Router v7', desc: 'Navegación entre vistas' },
-              { icon: '🌐', name: 'Fetch API', desc: 'Consumo de la API REST' },
-              { icon: '🗄️', name: 'Node.js + Express', desc: 'Backend de la API' },
-              { icon: '🍃', name: 'MongoDB + Mongoose', desc: 'Base de datos' },
-              { icon: '🐳', name: 'Docker', desc: 'Contenedorización del backend' },
+              {name: 'React', desc: 'Librería principal de UI' },
+              {name: 'TypeScript', desc: 'Tipado estático' },
+              {name: 'Vite', desc: 'Bundler y servidor de desarrollo' },
+              {name: 'Bootstrap', desc: 'Framework de estilos' },
+              {name: 'React Router', desc: 'Navegación entre vistas' },
+              {name: 'Fetch API', desc: 'Consumo de la API REST' },
+              {name: 'Node.js + Express', desc: 'Backend de la API' },
+              {name: 'MongoDB + Mongoose', desc: 'Base de datos' },
+              {name: 'Docker', desc: 'Contenedorización del backend' },
             ].map((tech) => (
               <div key={tech.name} className="col-6 col-md-4">
                 <div
                   className="d-flex align-items-center gap-2 p-3 rounded-4"
                   style={{ backgroundColor: '#f0f2f5' }}
                 >
-                  <span style={{ fontSize: '1.4rem' }}>{tech.icon}</span>
+                  <span style={{ fontSize: '1.4rem' }}></span>
                   <div>
                     <p className="fw-semibold mb-0" style={{ fontSize: '0.9rem' }}>
                       {tech.name}
@@ -80,16 +76,16 @@ export default function About() {
           </h3>
           <div className="d-flex flex-column gap-2">
             {[
-              '✅ Registro e inicio de sesión simulado',
-              '✅ Feed de publicaciones con imágenes y etiquetas',
-              '✅ Comentarios en publicaciones',
-              '✅ Creación de publicaciones con imagen y tags',
-              '✅ Perfil de usuario con sus publicaciones',
-              '✅ Seguir y dejar de seguir usuarios',
-              '✅ Eliminar publicaciones propias',
-              '✅ Eliminar cuenta',
-              '✅ Rutas protegidas para usuarios logueados',
-              '✅ Persistencia de sesión con localStorage',
+              'Registro e inicio de sesión simulado',
+              'Feed de publicaciones con imágenes y etiquetas',
+              'Comentarios en publicaciones',
+              'Creación de publicaciones con imagen y tags',
+              'Perfil de usuario con sus publicaciones',
+              'Seguir y dejar de seguir usuarios',
+              'Eliminar publicaciones propias',
+              'Eliminar cuenta',
+              'Rutas protegidas para usuarios logueados',
+              'Persistencia de sesión con localStorage',
             ].map((feat) => (
               <p key={feat} className="mb-0" style={{ fontSize: '0.95rem' }}>
                 {feat}
@@ -136,7 +132,7 @@ export default function About() {
         {/* CTA */}
         <div className="text-center py-3">
           <p className="text-muted mb-3">
-            ¿Querés ser parte de la comunidad más anti-social de internet?
+            ¿Querés ser parte de la comunidad?
           </p>
           <div className="d-flex gap-3 justify-content-center">
             <Link

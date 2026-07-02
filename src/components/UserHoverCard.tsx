@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { followUser, unfollowUser, getPosts, getFollowers } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import type { User } from '../types';
 
 interface Props {
@@ -80,21 +81,26 @@ export default function UserHoverCard({ author, followingIds, onFollowChange }: 
       onMouseLeave={handleMouseLeave}
     >
       <div className="d-flex align-items-center gap-2" style={{ cursor: 'default' }}>
-        <div
-          className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-          style={{
-            width: 40,
-            height: 40,
-            fontSize: '1rem',
-            backgroundColor: '#1877f2',
-            flexShrink: 0,
-          }}
+        <Link
+          to={`/user/${nickname}`}
+          className="d-flex align-items-center gap-2 text-decoration-none"
         >
-          {nickname[0].toUpperCase()}
-        </div>
-        <p className="fw-semibold mb-0" style={{ fontSize: '0.95rem' }}>
-          {nickname}
-        </p>
+          <div
+            className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+            style={{
+              width: 40,
+              height: 40,
+              fontSize: '1rem',
+              backgroundColor: '#1877f2',
+              flexShrink: 0,
+            }}
+          >
+            {nickname[0].toUpperCase()}
+          </div>
+          <p className="fw-semibold mb-0 text-dark" style={{ fontSize: '0.95rem' }}>
+            {nickname}
+          </p>
+        </Link>
       </div>
 
       {show && (

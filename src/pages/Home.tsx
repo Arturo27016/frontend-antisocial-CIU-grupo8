@@ -71,7 +71,7 @@ export default function Home() {
           background: 'linear-gradient(135deg, #1877f2 0%, #0a58ca 100%)',
         }}
       >
-        <h2 className="fw-bold display-5">Bienvenido a AntiSocial Net</h2>
+        <h2 className="fw-bold display-5">Bienvenido a AntiSocial</h2>
       </div>
 
       <div className="container py-4" style={{ maxWidth: 680 }}>
