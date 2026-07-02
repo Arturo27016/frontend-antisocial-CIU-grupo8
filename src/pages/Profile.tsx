@@ -30,7 +30,7 @@ export default function Profile() {
     getFollowing(user.nickname),
     ]).then(async ([allPosts, followers, followingList]) => {
       const myPosts = allPosts.filter((p) => {
-        if (!p.userId) return false; // ← descarta posts huérfanos
+        if (!p.userId) return false;
         const uid = typeof p.userId === 'object' ? p.userId._id : p.userId;
         return uid === user._id;
       });

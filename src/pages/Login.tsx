@@ -68,7 +68,7 @@ export default function Login() {
             AntiSocial
           </h1>
           <p className="text-muted">
-            Conectate con tus conocidos... o no.
+            Conectate con el mundo.
           </p>
         </div>
 
@@ -122,11 +122,6 @@ export default function Login() {
             </Link>
           </div>
         </div>
-
-        <p className="text-center text-muted mt-3" style={{ fontSize: '0.85rem' }}>
-          La contraseña para todos los usuarios es{' '}
-          <strong>123456</strong>
-        </p>
       </div>
     </div>
   );

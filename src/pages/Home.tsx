@@ -72,9 +72,6 @@ export default function Home() {
         }}
       >
         <h2 className="fw-bold display-5">Bienvenido a AntiSocial Net</h2>
-        <p className="lead mb-0">
-          La red social donde nadie quiere estar... pero todos están.
-        </p>
       </div>
 
       <div className="container py-4" style={{ maxWidth: 680 }}>

@@ -8,6 +8,7 @@ import Register from './pages/Register.tsx';
 import PostDetail from './pages/PostDetail.tsx';
 import Profile from './pages/Profile.tsx';
 import CreatePost from './pages/CreatePost.tsx';
+import About from './pages/About.tsx';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/post/:id" element={<PostDetail />} />
+          <Route path="/about" element={<About />} />
 
           {/* Rutas protegidas */}
           <Route

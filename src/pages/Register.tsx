@@ -57,7 +57,7 @@ export default function Register() {
           >
             AntiSocial
           </h1>
-          <p className="text-muted">Creá tu cuenta. O no.</p>
+          <p className="text-muted">Creá tu cuenta.</p>
         </div>
 
         {/* Card */}
