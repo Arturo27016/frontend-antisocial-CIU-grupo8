@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './router/ProtectedRoute';
 
@@ -23,9 +23,16 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/about" element={<About />} />
-          <Route path="/user/:nickname" element={<UserProfile />} />
 
           {/* Rutas protegidas */}
+          <Route
+            path="/user/:nickname"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/profile"
             element={

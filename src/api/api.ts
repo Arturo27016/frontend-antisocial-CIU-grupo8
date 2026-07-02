@@ -33,6 +33,9 @@ export async function createUser(data: {
     body: JSON.stringify(data),
   });
   if (!res.ok) {
+    if (res.status === 409) {
+      throw new Error('El nickname ya está en uso. Elegí otro.');
+    }
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || 'No se pudo crear el usuario');
   }

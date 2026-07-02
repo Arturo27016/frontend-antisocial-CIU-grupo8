@@ -13,7 +13,8 @@ export default function Home() {
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { user } = useAuth();
+  const { user, isLoggedIn } = useAuth();
+  
 
   // Estado global de following para compartir entre todos los PostCard
   const [followingIds, setFollowingIds] = useState<string[]>([]);
@@ -65,13 +66,27 @@ export default function Home() {
     <>
       <Navbar />
 
+      {/* Banner de bienvenida */}
       <div
         className="text-white text-center py-5"
         style={{
           background: 'linear-gradient(135deg, #1877f2 0%, #0a58ca 100%)',
         }}
       >
-        <h2 className="fw-bold display-5">Bienvenido a AntiSocial</h2>
+        {isLoggedIn ? (
+          <>
+            <h2 className="fw-bold display-5">
+              ¡Bienvenido de vuelta, {user?.nickname}!
+            </h2>
+            <p className="lead mb-0">
+              ¿Qué está pasando hoy en AntiSocial?
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="fw-bold display-5">Bienvenido a AntiSocial</h2>
+          </>
+        )}
       </div>
 
       <div className="container py-4" style={{ maxWidth: 680 }}>
