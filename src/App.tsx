@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './router/ProtectedRoute';
 
@@ -10,6 +10,7 @@ import Profile from './pages/Profile.tsx';
 import CreatePost from './pages/CreatePost.tsx';
 import About from './pages/About.tsx';
 import UserProfile from './pages/UserProfile.tsx';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   return (
@@ -42,8 +43,8 @@ export default function App() {
             }
           />
 
-          {/* Cualquier ruta desconocida va al home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Cualquier ruta desconocida va al error */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
